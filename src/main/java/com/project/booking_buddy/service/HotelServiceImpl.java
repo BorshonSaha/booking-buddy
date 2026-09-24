@@ -6,6 +6,7 @@ import com.project.booking_buddy.entity.Room;
 import com.project.booking_buddy.exception.ResourceNotFoundException;
 import com.project.booking_buddy.repository.HotelRepository;
 import com.project.booking_buddy.repository.InventoryRepository;
+import com.project.booking_buddy.repository.RoomRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class HotelServiceImpl implements HotelService {
 
+    private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
     private final InventoryService inventoryService;
     private final ModelMapper modelMapper;
@@ -59,12 +61,14 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: " +id));
-        hotelRepository.deleteById(id);
 
-//      delete the future inventories for this hotel
+//      delete the inventories for this room and hotel
         for(Room room: hotel.getRooms()) {
-            inventoryService.deleteFutureInventories(room);
+            inventoryService.deleteAllInventories(room);
+            roomRepository.deleteById(room.getId());
         }
+
+        hotelRepository.deleteById(id);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.project.booking_buddy.service;
 
-import com.project.booking_buddy.dto.HotelDto;
 import com.project.booking_buddy.dto.RoomDto;
 import com.project.booking_buddy.entity.Hotel;
 import com.project.booking_buddy.entity.Room;
@@ -74,8 +73,8 @@ public class RoomServiceImpl implements RoomService{
                 .findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: "+roomId));
 
-//      delete all future inventories for this room
-        inventoryService.deleteFutureInventories(room);
+//      delete all inventories for this room
+        inventoryService.deleteAllInventories(room);
 
         roomRepository.deleteById(roomId);
     }
