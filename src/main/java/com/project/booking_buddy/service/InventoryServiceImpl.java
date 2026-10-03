@@ -64,6 +64,18 @@ public class InventoryServiceImpl implements InventoryService{
                 hotelSearchRequest.getRoomsCount(),
                 dateCount, pageable);
 
-        return hotelPage.map((element) -> modelMapper.map(element, HotelDto.class));
+        return hotelPage.map(this::toSearchResult);
+    }
+
+    private HotelDto toSearchResult(Hotel hotel) {
+        HotelDto dto = new HotelDto();
+        dto.setId(hotel.getId());
+        dto.setName(hotel.getName());
+        dto.setCity(hotel.getCity());
+        dto.setPhotos(hotel.getPhotos());
+        dto.setAmenities(hotel.getAmenities());
+        dto.setActive(hotel.isActive());
+        dto.setContactInfo(hotel.getContactInfo());
+        return dto;
     }
 }
