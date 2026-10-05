@@ -6,6 +6,7 @@ import com.project.booking_buddy.entity.Hotel;
 import com.project.booking_buddy.entity.Inventory;
 import com.project.booking_buddy.entity.Room;
 import com.project.booking_buddy.repository.InventoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -36,6 +37,7 @@ public class InventoryServiceImpl implements InventoryService{
                     .hotel(room.getHotel())
                     .room(room)
                     .bookedCount(0)
+                    .reservedCount(0)
                     .city(room.getHotel().getCity())
                     .date(today)
                     .price(room.getBasePrice())
@@ -54,7 +56,9 @@ public class InventoryServiceImpl implements InventoryService{
     }
 
     @Override
+    @Transactional
     public Page<HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest) {
+        log.info("Searching hotel for {} city, from {} to {}", hotelSearchRequest.getCity(), hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate() );
         Pageable pageable = PageRequest.of(hotelSearchRequest.getPage(), hotelSearchRequest.getSize());
         long dateCount = ChronoUnit.DAYS.between(hotelSearchRequest.getStartDate(), hotelSearchRequest.getEndDate()) + 1;
 
@@ -64,18 +68,6 @@ public class InventoryServiceImpl implements InventoryService{
                 hotelSearchRequest.getRoomsCount(),
                 dateCount, pageable);
 
-        return hotelPage.map(this::toSearchResult);
-    }
-
-    private HotelDto toSearchResult(Hotel hotel) {
-        HotelDto dto = new HotelDto();
-        dto.setId(hotel.getId());
-        dto.setName(hotel.getName());
-        dto.setCity(hotel.getCity());
-        dto.setPhotos(hotel.getPhotos());
-        dto.setAmenities(hotel.getAmenities());
-        dto.setActive(hotel.isActive());
-        dto.setContactInfo(hotel.getContactInfo());
-        return dto;
+        return hotelPage.map((element) -> modelMapper.map(element, HotelDto.class));
     }
 }

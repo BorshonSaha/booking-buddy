@@ -16,5 +16,4 @@ public class HotelDto {
     private String[] amenities;
     private boolean active;
     private HotelContactInfo contactInfo;
-    private List<Room> rooms;
 }

@@ -36,4 +36,8 @@ public class Payment {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id")
+    private Booking booking;
 }

@@ -1,6 +1,8 @@
 package com.project.booking_buddy.service;
 
 import com.project.booking_buddy.dto.HotelDto;
+import com.project.booking_buddy.dto.HotelInfoDto;
+import com.project.booking_buddy.dto.RoomDto;
 import com.project.booking_buddy.entity.Hotel;
 import com.project.booking_buddy.entity.Room;
 import com.project.booking_buddy.exception.ResourceNotFoundException;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -85,5 +89,21 @@ public class HotelServiceImpl implements HotelService {
         for(Room room: hotel.getRooms()){
             inventoryService.initializeRoomForAYear(room);
         }
+    }
+
+    @Override
+    @Transactional
+    public Object getHotelInfoById(Long hotelId) {
+        log.info("Getting the hotel info with ID: {}", hotelId);
+        Hotel hotel = hotelRepository
+                .findById(hotelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: " +hotelId));
+
+        List<RoomDto> rooms = hotel.getRooms()
+                .stream()
+                .map((element) -> modelMapper.map(element, RoomDto.class))
+                .toList();
+
+        return new HotelInfoDto(modelMapper.map(hotel, HotelDto.class), rooms);
     }
 }

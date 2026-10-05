@@ -14,4 +14,6 @@ public interface HotelService {
     void deleteHotelById(Long id);
 
     void activateHotel(Long id);
+
+    Object getHotelInfoById(Long hotelId);
 }
