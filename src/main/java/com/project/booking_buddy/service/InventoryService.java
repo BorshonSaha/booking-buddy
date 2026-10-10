@@ -1,6 +1,7 @@
 package com.project.booking_buddy.service;
 
 import com.project.booking_buddy.dto.HotelDto;
+import com.project.booking_buddy.dto.HotelPriceDto;
 import com.project.booking_buddy.dto.HotelSearchRequest;
 import com.project.booking_buddy.entity.Room;
 import org.springframework.data.domain.Page;
@@ -13,5 +14,5 @@ public interface InventoryService {
 
     void deleteAllInventories(Room room);
 
-    Page<HotelDto> searchHotels(HotelSearchRequest hotelSearchRequest);
+    Page<HotelPriceDto> searchHotels(HotelSearchRequest hotelSearchRequest);
 }

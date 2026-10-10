@@ -7,6 +7,7 @@ import com.project.booking_buddy.entity.*;
 import com.project.booking_buddy.entity.enums.BookingStatus;
 import com.project.booking_buddy.exception.ResourceNotFoundException;
 import com.project.booking_buddy.repository.*;
+import com.project.booking_buddy.strategy.PricingService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class BookingServiceImpl implements BookingService {
     private final HotelRepository hotelRepository;
     private final RoomRepository roomRepository;
     private final InventoryRepository inventoryRepository;
+    private final PricingService pricingService;
 
     private final ModelMapper modelMapper;
 
@@ -73,7 +75,9 @@ public class BookingServiceImpl implements BookingService {
         User user = new User();
         user.setId(1L);
 
-//        TODO: CALCULATE DINAMIC PRICING
+//  dynamic pricing calculation
+        BigDecimal priceForOneRoom = pricingService.calculateTotalPrice(inventoryList);
+        BigDecimal totalPrice = priceForOneRoom.multiply(BigDecimal.valueOf(bookingRequest.getRoomsCount()));
 
 //        creating the booking
         Booking booking = Booking.builder()
@@ -84,7 +88,7 @@ public class BookingServiceImpl implements BookingService {
                 .checkOutDate(bookingRequest.getCheckOutDate())
                 .user(user)
                 .roomsCount(bookingRequest.getRoomsCount())
-                .amount(BigDecimal.TEN)
+                .amount(totalPrice)
                 .build();
 
         booking = bookingRepository.save(booking);
