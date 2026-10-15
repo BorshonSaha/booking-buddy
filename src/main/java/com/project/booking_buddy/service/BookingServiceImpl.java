@@ -6,6 +6,7 @@ import com.project.booking_buddy.dto.GuestDto;
 import com.project.booking_buddy.entity.*;
 import com.project.booking_buddy.entity.enums.BookingStatus;
 import com.project.booking_buddy.exception.ResourceNotFoundException;
+import com.project.booking_buddy.exception.UnAuthorisedException;
 import com.project.booking_buddy.repository.*;
 import com.project.booking_buddy.strategy.PricingService;
 import jakarta.transaction.Transactional;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -71,10 +73,6 @@ public class BookingServiceImpl implements BookingService {
 
         inventoryRepository.saveAll(inventoryList);
 
-//        TODO: NEED TO REMOVE DUMMY USER
-        User user = new User();
-        user.setId(1L);
-
 //  dynamic pricing calculation
         BigDecimal priceForOneRoom = pricingService.calculateTotalPrice(inventoryList);
         BigDecimal totalPrice = priceForOneRoom.multiply(BigDecimal.valueOf(bookingRequest.getRoomsCount()));
@@ -86,7 +84,7 @@ public class BookingServiceImpl implements BookingService {
                 .room(room)
                 .checkInDate(bookingRequest.getCheckInDate())
                 .checkOutDate(bookingRequest.getCheckOutDate())
-                .user(user)
+                .user(getCurrentUser())
                 .roomsCount(bookingRequest.getRoomsCount())
                 .amount(totalPrice)
                 .build();
@@ -103,6 +101,12 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() ->
                 new ResourceNotFoundException("Booking not found with id: "+bookingId));
 
+        User user = getCurrentUser();
+
+        if(user.equals(booking.getUser())) {
+            throw new UnAuthorisedException("Booking does not belongs to this user with id: " +user.getId());
+        }
+
         if (hasBookingExpired(booking)) {
             throw new IllegalStateException("Booking has already expired");
         }
@@ -111,13 +115,9 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalStateException("Booking is not under reserved state, cannot add guests");
         }
 
-        //        TODO: NEED TO REMOVE DUMMY USER
-        User user = new User();
-        user.setId(1L);
-
         for (GuestDto guestDto: guestDtoList) {
             Guest guest = modelMapper.map(guestDto, Guest.class);
-            guest.setUser(user);
+            guest.setUser(getCurrentUser());
             guest = guestRepository.save(guest);
             booking.getGuests().add(guest);
         }
@@ -129,5 +129,9 @@ public class BookingServiceImpl implements BookingService {
 
     public boolean hasBookingExpired(Booking booking) {
         return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());
+    }
+
+    public User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

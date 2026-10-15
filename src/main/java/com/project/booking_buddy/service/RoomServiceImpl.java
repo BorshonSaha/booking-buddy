@@ -3,13 +3,16 @@ package com.project.booking_buddy.service;
 import com.project.booking_buddy.dto.RoomDto;
 import com.project.booking_buddy.entity.Hotel;
 import com.project.booking_buddy.entity.Room;
+import com.project.booking_buddy.entity.User;
 import com.project.booking_buddy.exception.ResourceNotFoundException;
+import com.project.booking_buddy.exception.UnAuthorisedException;
 import com.project.booking_buddy.repository.HotelRepository;
 import com.project.booking_buddy.repository.RoomRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +34,13 @@ public class RoomServiceImpl implements RoomService{
         Hotel hotel = hotelRepository
                 .findById(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: " +hotelId));
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!user.equals(hotel.getOwner())) {
+            throw new UnAuthorisedException("This user does not owns this hotel with id: " +hotelId);
+        }
+
         Room room = modelMapper.map(roomDto, Room.class);
         room.setHotel(hotel);
         room = roomRepository.save(room);
@@ -72,6 +82,12 @@ public class RoomServiceImpl implements RoomService{
         Room room = roomRepository
                 .findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: "+roomId));
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!user.equals(room.getHotel().getOwner())) {
+            throw new UnAuthorisedException("This user does not owns this room with id: " +roomId);
+        }
 
 //      delete all inventories for this room
         inventoryService.deleteAllInventories(room);
