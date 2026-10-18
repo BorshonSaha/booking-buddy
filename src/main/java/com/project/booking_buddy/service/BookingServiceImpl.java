@@ -9,11 +9,13 @@ import com.project.booking_buddy.exception.ResourceNotFoundException;
 import com.project.booking_buddy.exception.UnAuthorisedException;
 import com.project.booking_buddy.repository.*;
 import com.project.booking_buddy.strategy.PricingService;
+import com.stripe.model.Event;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -32,8 +34,12 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepository roomRepository;
     private final InventoryRepository inventoryRepository;
     private final PricingService pricingService;
+    private final CheckoutService checkoutService;
 
     private final ModelMapper modelMapper;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Override
     @Transactional
@@ -125,6 +131,41 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
 
         return modelMapper.map(booking, BookingDto.class);
+    }
+
+    @Override
+    @Transactional
+    public String initiatePayments(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(
+                () -> new ResourceNotFoundException("Booking not found with id: " +bookingId)
+        );
+
+        User user = getCurrentUser();
+
+        if(user.equals(booking.getUser())) {
+            throw new UnAuthorisedException("Booking does not belongs to this user with id: " +user.getId());
+        }
+
+        if (hasBookingExpired(booking)) {
+            throw new IllegalStateException("Booking has already expired");
+        }
+
+        String sessionUrl = checkoutService.getCheckoutSession(
+                booking,
+                frontendUrl+"/payments/success",
+                frontendUrl+"/payments/failure"
+        );
+
+        booking.setBookingStatus(BookingStatus.PAYMENTS_PENDING);
+        bookingRepository.save(booking);
+
+        return sessionUrl;
+    }
+
+    @Override
+    @Transactional
+    public void capturePayment(Event event) {
+
     }
 
     public boolean hasBookingExpired(Booking booking) {
