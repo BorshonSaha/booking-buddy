@@ -3,6 +3,8 @@ package com.project.booking_buddy.service;
 
 import com.project.booking_buddy.dto.HotelDto;
 
+import java.util.List;
+
 public interface HotelService {
 
     HotelDto createNewHotel(HotelDto hotelDto);
@@ -16,4 +18,6 @@ public interface HotelService {
     void activateHotel(Long id);
 
     Object getHotelInfoById(Long hotelId);
+
+    List<HotelDto> getAllHotels();
 }

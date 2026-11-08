@@ -2,6 +2,7 @@ package com.project.booking_buddy.controller;
 
 import com.project.booking_buddy.dto.BookingDto;
 import com.project.booking_buddy.dto.BookingRequest;
+import com.project.booking_buddy.dto.BookingStatusResponseDto;
 import com.project.booking_buddy.dto.GuestDto;
 import com.project.booking_buddy.service.BookingService;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,8 @@ public class HotelBookingController {
     }
 
     @PostMapping("/{bookingId}/addGuests")
-    public ResponseEntity<BookingDto> addGuests(
-            @PathVariable Long bookingId,
-            @RequestBody List<GuestDto> guestDtoList) {
+    public ResponseEntity<BookingDto> addGuests(@PathVariable Long bookingId,
+                                                @RequestBody List<GuestDto> guestDtoList) {
         return ResponseEntity.ok(bookingService.addGuests(bookingId, guestDtoList));
     }
 
@@ -36,5 +36,16 @@ public class HotelBookingController {
     public ResponseEntity<Map<String, String>> initiatePayment(@PathVariable Long bookingId) {
         String sessionUrl = bookingService.initiatePayments(bookingId);
         return ResponseEntity.ok(Map.of("sessionUrl", sessionUrl));
+    }
+
+    @PostMapping("/{bookingId}/cancel")
+    public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingId) {
+        bookingService.cancelBooking(bookingId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{bookingId}/status")
+    public ResponseEntity<BookingStatusResponseDto> getBookingStatus(@PathVariable Long bookingId) {
+        return ResponseEntity.ok(new BookingStatusResponseDto(bookingService.getBookingStatus(bookingId)));
     }
 }

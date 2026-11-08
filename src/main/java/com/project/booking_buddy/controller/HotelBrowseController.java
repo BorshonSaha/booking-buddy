@@ -1,9 +1,6 @@
 package com.project.booking_buddy.controller;
 
-import com.project.booking_buddy.dto.HotelDto;
-import com.project.booking_buddy.dto.HotelInfoDto;
-import com.project.booking_buddy.dto.HotelPriceDto;
-import com.project.booking_buddy.dto.HotelSearchRequest;
+import com.project.booking_buddy.dto.*;
 import com.project.booking_buddy.service.HotelService;
 import com.project.booking_buddy.service.InventoryService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +19,8 @@ public class HotelBrowseController {
     private final HotelService hotelService;
 
     @GetMapping("/search")
-    public ResponseEntity<Page<HotelPriceDto>> searchHotels(@RequestBody HotelSearchRequest hotelSearchRequest) {
+    public ResponseEntity<Page<HotelPriceResponseDto>> searchHotels(@RequestBody HotelSearchRequest hotelSearchRequest) {
+
         var page = inventoryService.searchHotels(hotelSearchRequest);
         return ResponseEntity.ok(page);
     }

@@ -19,6 +19,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.project.booking_buddy.util.AppUtils.getCurrentUser;
 
 @Service
 @Slf4j
@@ -119,13 +122,12 @@ public class HotelServiceImpl implements HotelService {
         hotel.setActive(true);
         hotelRepository.save(hotel);
 
-//      Create inventory for all the rooms for this hotel
+//      create inventory for all the rooms for this hotel
         for(Room room: hotel.getRooms()){
             inventoryService.initializeRoomForAYear(room);
         }
     }
 
-//    Public method
     @Override
     @Transactional
     public Object getHotelInfoById(Long hotelId) {
@@ -140,5 +142,17 @@ public class HotelServiceImpl implements HotelService {
                 .toList();
 
         return new HotelInfoDto(modelMapper.map(hotel, HotelDto.class), rooms);
+    }
+
+    @Override
+    public List<HotelDto> getAllHotels() {
+        User user = getCurrentUser();
+        log.info("Getting all hotels for the admin user with ID: {}", user.getId());
+        List<Hotel> hotels = hotelRepository.findByOwner(user);
+
+        return hotels
+                .stream()
+                .map((element) -> modelMapper.map(element, HotelDto.class))
+                .collect(Collectors.toList());
     }
 }
